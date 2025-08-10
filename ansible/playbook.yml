@@ -1,0 +1,85 @@
+---
+- name: Blockchain Development Environment Setup
+  hosts: localhost
+  become: yes
+  vars:
+    project_dir: "{{ ansible_env.HOME }}/blockchain-dev-suite"
+    venv_path: "{{ project_dir }}/venv"
+    
+  tasks:
+    - name: Update package cache (DNF)
+      dnf:
+        update_cache: yes
+      when: ansible_pkg_mgr == "dnf"
+      
+    - name: Update package cache (YUM)
+      yum:
+        update_cache: yes
+      when: ansible_pkg_mgr == "yum"
+      
+    - name: Install system dependencies
+      package:
+        name:
+          - git
+          - curl
+          - wget
+          - python3
+          - python3-pip
+          - python3-venv
+          - nodejs
+          - npm
+          - gcc
+          - gcc-c++
+          - make
+        state: present
+        
+    - name: Install Node.js repository
+      shell: curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
+      args:
+        creates: /etc/yum.repos.d/nodesource-el.repo
+        
+    - name: Install latest Node.js
+      package:
+        name: nodejs
+        state: latest
+        
+    - name: Install Ganache CLI globally
+      npm:
+        name: ganache-cli
+        global: yes
+        state: latest
+        
+    - name: Install Solidity compiler globally
+      npm:
+        name: solc
+        global: yes
+        state: latest
+        
+    - name: Create Python virtual environment
+      command: python3 -m venv {{ venv_path }}
+      args:
+        creates: "{{ venv_path }}/bin/activate"
+        
+    - name: Install Python requirements
+      pip:
+        requirements: "{{ project_dir }}/requirements.txt"
+        virtualenv: "{{ venv_path }}"
+        
+    - name: Copy systemd service file
+      copy:
+        src: "{{ project_dir }}/systemd/start-ganache.service"
+        dest: /etc/systemd/system/start-ganache.service
+        mode: '0644'
+        
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+        
+    - name: Make scripts executable
+      file:
+        path: "{{ project_dir }}/scripts/{{ item }}"
+        mode: '0755'
+      loop:
+        - start_ganache.sh
+        - stop_ganache.sh
+        - setup_venv.sh

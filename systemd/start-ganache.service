@@ -1,0 +1,29 @@
+[Unit]
+Description=Ganache CLI Ethereum Simulator
+After=network.target
+
+[Service]
+Type=simple
+User=ganache
+Group=ganache
+WorkingDirectory=/home/ganache/blockchain-dev-suite
+Environment=NODE_ENV=development
+ExecStart=/usr/bin/ganache-cli \
+    --host 0.0.0.0 \
+    --port 8545 \
+    --deterministic \
+    --mnemonic "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about" \
+    --accounts 10 \
+    --defaultBalanceEther 1000 \
+    --gasLimit 10000000 \
+    --gasPrice 20000000000 \
+    --hardfork berlin
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

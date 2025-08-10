@@ -1,0 +1,57 @@
+blockchain-dev-suite/
+├── README.md
+├── provision.sh
+├── ansible/
+│   └── playbook.yml
+├── Dockerfile
+├── systemd/
+│   └── start-ganache.service
+├── scripts/
+│   ├── start_ganache.sh
+│   ├── stop_ganache.sh
+│   └── setup_venv.sh
+├── contracts/
+│   ├── ERC20Token.sol
+│   ├── ERC721Token.sol
+│   ├── ERC1155Token.sol
+│   ├── AMM.sol
+│   ├── Router.sol
+│   └── interfaces/
+│       ├── IERC20.sol
+│       ├── IERC721.sol
+│       └── IERC1155.sol
+├── hardhat.config.js
+├── package.json
+├── brownie-config.yaml
+├── migrations/
+│   ├── 1_deploy_tokens.js
+│   └── 2_deploy_amm.js
+├── deploy.py
+├── simulator/
+│   ├── __init__.py
+│   ├── agent_base.py
+│   ├── market_maker.py
+│   ├── trader.py
+│   ├── run_simulation.py
+│   └── metrics.py
+├── tests/
+│   ├── solidity/
+│   │   ├── TestERC20.sol
+│   │   ├── TestERC721.sol
+│   │   ├── TestERC1155.sol
+│   │   └── TestAMM.sol
+│   └── python/
+│       ├── test_deployment.py
+│       ├── test_simulation.py
+│       └── test_integration.py
+├── ci/
+│   └── github-actions.yml
+├── data/
+│   ├── schemas/
+│   │   ├── events.json
+│   │   └── metrics.json
+│   └── diagrams/
+│       └── dataflow.puml
+├── requirements.txt
+├── deployed.json.example
+└── .env

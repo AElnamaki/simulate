@@ -1,0 +1,35 @@
+{
+  "name": "blockchain-dev-suite",
+  "version": "1.0.0",
+  "description": "Complete blockchain development and testing suite",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network ganache",
+    "coverage": "hardhat coverage",
+    "start-ganache": "./scripts/start_ganache.sh",
+    "stop-ganache": "./scripts/stop_ganache.sh",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "size": "hardhat size-contracts"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/hardhat-upgrades": "^1.28.0"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "chai": "^4.3.8",
+    "ethereum-waffle": "^4.0.10",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.1",
+    "hardhat-gas-reporter": "^1.0.9",
+    "hardhat-contract-sizer": "^2.10.0",
+    "solhint": "^3.6.2",
+    "solidity-coverage": "^0.8.4"
+  },
+  "keywords": ["blockchain", "ethereum", "smart-contracts", "defi", "amm"],
+  "author": "Blockchain Dev Suite",
+  "license": "MIT"
+}
+        

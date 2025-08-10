@@ -1,0 +1,475 @@
+BLOCKCHAIN DEVELOPMENT SUITE - ARCHITECTURE OVERVIEW
+================================================================
+
+┌─────────────────────────────────────────────────────────────┐
+│                    SIMULATION LAYER                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────┐    ┌──────────────────────────────────┐│
+│  │ SimulationRunner│◄──►│        Agent Ecosystem          ││
+│  │                 │    │                                  ││
+│  │ • Orchestration │    │  ┌──────────────┐ ┌─────────────┐││
+│  │ • Time Management│    │  │ MarketMaker  │ │   Traders   │││
+│  │ • Metrics Collection│  │  │              │ │ • Random    │││
+│  │ • Data Export   │    │  │ • Add/Remove │    def calculate_slippage(self, 
+                          amount_in: int, 
+                          expected_out: int, 
+                          actual_out: int) -> float:
+        """
+        Calculate slippage percentage
+        
+        Args:
+            amount_in: Input amount
+            expected_out: Expected output amount (without slippage)
+            actual_out: Actual output amount received
+            
+        Returns:
+            Slippage percentage (positive = unfavorable slippage)
+        """
+        if expected_out <= 0:
+            return 0.0
+        
+        slippage = (expected_out - actual_out) / expected_out
+        return max(0.0, slippage)  # Slippage is always positive
+    
+    def calculate_price_impact(self, 
+                             amount_in: int, 
+                             reserve_in: int, 
+                             reserve_out: int,
+                             fee_bps: int = 30) -> float:
+        """
+        Calculate price impact of a trade
+        
+        Args:
+            amount_in: Input amount
+            reserve_in: Input token reserve
+            reserve_out: Output token reserve  
+            fee_bps: Trading fee in basis points
+            
+        Returns:
+            Price impact percentage
+        """
+        if reserve_in <= 0 or reserve_out <= 0:
+            return 0.0
+        
+        # Price before trade
+        price_before = reserve_in / reserve_out
+        
+        # Calculate output amount (constant product formula with fee)
+        amount_in_with_fee = amount_in * (10000 - fee_bps) // 10000
+        numerator = amount_in_with_fee * reserve_out
+        denominator = reserve_in + amount_in_with_fee
+        amount_out = numerator // denominator
+        
+        if amount_out >= reserve_out:
+            return 1.0  # 100% price impact (trade impossible)
+        
+        # Price after trade
+        new_reserve_in = reserve_in + amount_in
+        new_reserve_out = reserve_out - amount_out
+        price_after = new_reserve_in / new_reserve_out if new_reserve_out > 0 else float('inf')
+        
+        # Price impact
+        if price_before <= 0:
+            return 0.0
+        
+        price_impact = abs(price_after - price_before) / price_before
+        return min(1.0, price_impact)  # Cap at 100%
+    
+    def calculate_impermanent_loss(self, 
+                                  initial_price: float, 
+                                  current_price: float,
+                                  initial_reserve_a: int,
+                                  initial_reserve_b: int,
+                                  current_reserve_a: int,
+                                  current_reserve_b: int) -> float:
+        """
+        Calculate impermanent loss for liquidity providers
+        
+        Args:
+            initial_price: Initial token price ratio
+            current_price: Current token price ratio
+            initial_reserve_a: Initial reserve of token A
+            initial_reserve_b: Initial reserve of token B
+            current_reserve_a: Current reserve of token A
+            current_reserve_b: Current reserve of token B
+            
+        Returns:
+            Impermanent loss percentage (negative = loss)
+        """
+        if initial_price <= 0 or current_price <= 0:
+            return 0.0
+        
+        # Price ratio change
+        price_ratio = current_price / initial_price
+        
+        # Value if held tokens vs. value in LP
+        # Simplified calculation: IL = 2 * sqrt(price_ratio) / (1 + price_ratio) - 1
+        sqrt_ratio = math.sqrt(price_ratio)
+        il = 2 * sqrt_ratio / (1 + price_ratio) - 1
+        
+        return il
+    
+    def calculate_vwap(self, trades: List[Dict[str, Any]]) -> float:
+        """
+        Calculate Volume-Weighted Average Price
+        
+        Args:
+            trades: List of trade dictionaries with 'price' and 'volume' keys
+            
+        Returns:
+            VWAP value
+        """
+        if not trades:
+            return 0.0
+        
+        total_volume = 0
+        weighted_sum = 0
+        
+        for trade in trades:
+            price = trade.get('price', 0)
+            volume = trade.get('volume', 0)
+            
+            weighted_sum += price * volume
+            total_volume += volume
+        
+        return weighted_sum / total_volume if total_volume > 0 else 0.0
+    
+    def calculate_fee_apr(self, 
+                         fees_collected: float, 
+                         liquidity_value: float, 
+                         time_period_days: float) -> float:
+        """
+        Calculate fee APR for liquidity providers
+        
+        Args:
+            fees_collected: Total fees collected
+            liquidity_value: Total value of liquidity provided
+            time_period_days: Time period in days
+            
+        Returns:
+            Annualized fee percentage
+        """
+        if liquidity_value <= 0 or time_period_days <= 0:
+            return 0.0
+        
+        # Daily fee rate
+        daily_rate = fees_collected / liquidity_value / time_period_days
+        
+        # Annualized rate
+        apr = daily_rate * 365
+        
+        return apr
+    
+    def calculate_gas_efficiency(self, 
+                                transactions: List[Dict[str, Any]]) -> Dict[str, float]:
+        """
+        Calculate gas efficiency metrics
+        
+        Args:
+            transactions: List of transaction dictionaries
+            
+        Returns:
+            Dictionary of gas efficiency metrics
+        """
+        if not transactions:
+            return {
+                'total_gas': 0,
+                'avg_gas_per_tx': 0,
+                'total_gas_cost': 0,
+                'avg_gas_cost_per_tx': 0
+            }
+        
+        total_gas = sum(tx.get('gas_used', 0) for tx in transactions)
+        total_gas_cost = sum(
+            tx.get('gas_used', 0) * tx.get('gas_price', 0) 
+            for tx in transactions
+        )
+        
+        return {
+            'total_gas': total_gas,
+            'avg_gas_per_tx': total_gas / len(transactions),
+            'total_gas_cost': total_gas_cost,
+            'avg_gas_cost_per_tx': total_gas_cost / len(transactions)
+        }
+    
+    def calculate_liquidity_utilization(self, 
+                                      volume_24h: float, 
+                                      total_liquidity: float) -> float:
+        """
+        Calculate liquidity utilization ratio
+        
+        Args:
+            volume_24h: 24-hour trading volume
+            total_liquidity: Total liquidity in the pool
+            
+        Returns:
+            Utilization ratio (volume/liquidity)
+        """
+        if total_liquidity <= 0:
+            return 0.0
+        
+        return volume_24h / total_liquidity
+    
+    def calculate_sharpe_ratio(self, returns: List[float], risk_free_rate: float = 0.0) -> float:
+        """
+        Calculate Sharpe ratio for trading strategy performance
+        
+        Args:
+            returns: List of period returns
+            risk_free_rate: Risk-free rate (annualized)
+            
+        Returns:
+            Sharpe ratio
+        """
+        if not returns or len(returns) < 2:
+            return 0.0
+        
+        # Calculate excess returns
+        excess_returns = [r - risk_free_rate for r in returns]
+        
+        # Mean and standard deviation
+        mean_return = sum(excess_returns) / len(excess_returns)
+        variance = sum((r - mean_return) ** 2 for r in excess_returns) / (len(excess_returns) - 1)
+        std_dev = math.sqrt(variance)
+        
+        if std_dev <= 0:
+            return 0.0
+        
+        return mean_return / std_dev
+    
+    def calculate_step_metrics(self, 
+                             step: int,
+                             agent_actions: List[Dict[str, Any]], 
+                             market_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Calculate metrics for a single simulation step
+        
+        Args:
+            step: Current step number
+            agent_actions: List of agent actions in this step
+            market_data: Current market state
+            
+        Returns:
+            Dictionary of step metrics
+        """
+        # Count actions by type
+        action_counts = {}
+        total_volume = 0
+        total_gas_used = 0
+        
+        for agent_action in agent_actions:
+            agent_type = agent_action.get('agent_type', 'unknown')
+            action_counts[agent_type] = action_counts.get(agent_type, 0) + 1
+            
+            # Sum up volumes and gas from individual actions
+            for action in agent_action.get('actions_taken', []):
+                if 'amount' in action:
+                    total_volume += action['amount']
+                if 'gas_used' in action:
+                    total_gas_used += action['gas_used']
+        
+        # Calculate price movement
+        price_change = 0.0
+        if len(self.price_history) > 1:
+            current_price = self.price_history[-1]['price']
+            previous_price = self.price_history[-2]['price']
+            if previous_price > 0:
+                price_change = (current_price - previous_price) / previous_price
+        
+        # Calculate volatility (standard deviation of recent prices)
+        volatility = 0.0
+        if len(self.price_history) >= 5:
+            recent_prices = [p['price'] for p in self.price_history[-5:]]
+            mean_price = sum(recent_prices) / len(recent_prices)
+            variance = sum((p - mean_price) ** 2 for p in recent_prices) / len(recent_prices)
+            volatility = math.sqrt(variance)
+        
+        step_metrics = {
+            'step': step,
+            'timestamp': market_data.get('timestamp', 0),
+            'block_number': market_data.get('block_number', 0),
+            'price': market_data.get('price', 0),
+            'price_change': price_change,
+            'volatility': volatility,
+            'reserve_a': market_data.get('reserve_a', 0),
+            'reserve_b': market_data.get('reserve_b', 0),
+            'total_lp_supply': market_data.get('total_lp_supply', 0),
+            'k_invariant': market_data.get('k_invariant', 0),
+            'total_volume': total_volume,
+            'total_gas_used': total_gas_used,
+            'active_agents': len(agent_actions),
+            'action_counts': action_counts,
+            'gas_price': market_data.get('gas_price', 0)
+        }
+        
+        return step_metrics
+    
+    def calculate_overall_metrics(self, step_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Calculate overall simulation metrics
+        
+        Args:
+            step_results: List of all step results
+            
+        Returns:
+            Dictionary of overall metrics
+        """
+        if not step_results:
+            return {}
+        
+        # Extract time series data
+        prices = [step['step_metrics']['price'] for step in step_results if 'step_metrics' in step]
+        volumes = [step['step_metrics']['total_volume'] for step in step_results if 'step_metrics' in step]
+        gas_used = [step['step_metrics']['total_gas_used'] for step in step_results if 'step_metrics' in step]
+        
+        # Calculate price statistics
+        price_stats = {}
+        if prices:
+            price_stats = {
+                'min_price': min(prices),
+                'max_price': max(prices),
+                'avg_price': sum(prices) / len(prices),
+                'final_price': prices[-1],
+                'total_price_change': (prices[-1] - prices[0]) / prices[0] if prices[0] > 0 else 0,
+                'price_volatility': math.sqrt(sum((p - sum(prices)/len(prices)) ** 2 for p in prices) / len(prices)) if len(prices) > 1 else 0
+            }
+        
+        # Calculate volume statistics
+        volume_stats = {}
+        if volumes:
+            volume_stats = {
+                'total_volume': sum(volumes),
+                'avg_volume_per_step': sum(volumes) / len(volumes),
+                'max_volume_step': max(volumes),
+                'min_volume_step': min(volumes)
+            }
+        
+        # Calculate gas statistics
+        gas_stats = {}
+        if gas_used:
+            gas_stats = {
+                'total_gas_used': sum(gas_used),
+                'avg_gas_per_step': sum(gas_used) / len(gas_used),
+                'max_gas_step': max(gas_used),
+                'min_gas_step': min(gas_used)
+            }
+        
+        # Calculate trading activity
+        total_trades = sum(
+            len(step.get('agent_actions', [])) 
+            for step in step_results
+        )
+        
+        # Calculate agent type distribution
+        agent_type_counts = {}
+        for step in step_results:
+            for agent_action in step.get('agent_actions', []):
+                agent_type = agent_action.get('agent_type', 'unknown')
+                agent_type_counts[agent_type] = agent_type_counts.get(agent_type, 0) + 1
+        
+        overall_metrics = {
+            'simulation_steps': len(step_results),
+            'price_statistics': price_stats,
+            'volume_statistics': volume_stats,
+            'gas_statistics': gas_stats,
+            'trading_activity': {
+                'total_trades': total_trades,
+                'avg_trades_per_step': total_trades / len(step_results) if step_results else 0,
+                'agent_type_distribution': agent_type_counts
+            },
+            'market_efficiency': {
+                'price_discovery': self._calculate_price_discovery_score(prices),
+                'liquidity_provision': self._calculate_liquidity_score(step_results),
+                'market_depth': self._calculate_market_depth_score(step_results)
+            }
+        }
+        
+        return overall_metrics
+    
+    def _calculate_price_discovery_score(self, prices: List[float]) -> float:
+        """Calculate a price discovery efficiency score"""
+        if len(prices) < 2:
+            return 0.0
+        
+        # Simple measure: inverse of price volatility (more stable = better price discovery)
+        mean_price = sum(prices) / len(prices)
+        variance = sum((p - mean_price) ** 2 for p in prices) / len(prices)
+        volatility = math.sqrt(variance)
+        
+        if volatility == 0:
+            return 1.0  # Perfect price stability
+        
+        # Normalized score (lower volatility = higher score)
+        return max(0.0, 1.0 - min(1.0, volatility / mean_price))
+    
+    def _calculate_liquidity_score(self, step_results: List[Dict[str, Any]]) -> float:
+        """Calculate a liquidity provision score"""
+        total_lp_supplies = [
+            step['step_metrics']['total_lp_supply'] 
+            for step in step_results 
+            if 'step_metrics' in step
+        ]
+        
+        if not total_lp_supplies:
+            return 0.0
+        
+        # Simple measure: average LP token supply (normalized)
+        avg_lp_supply = sum(total_lp_supplies) / len(total_lp_supplies)
+        
+        # Normalize by some baseline (simplified)
+        baseline_supply = 1000000  # Arbitrary baseline
+        return min(1.0, avg_lp_supply / baseline_supply)
+    
+    def _calculate_market_depth_score(self, step_results: List[Dict[str, Any]]) -> float:
+        """Calculate a market depth score based on reserve balances"""
+        reserves_a = []
+        reserves_b = []
+        
+        for step in step_results:
+            if 'step_metrics' in step:
+                reserves_a.append(step['step_metrics']['reserve_a'])
+                reserves_b.append(step['step_metrics']['reserve_b'])
+        
+        if not reserves_a or not reserves_b:
+            return 0.0
+        
+        # Market depth = geometric mean of reserves (K value)
+        avg_reserve_a = sum(reserves_a) / len(reserves_a)
+        avg_reserve_b = sum(reserves_b) / len(reserves_b)
+        
+        market_depth = math.sqrt(avg_reserve_a * avg_reserve_b)
+        
+        # Normalize by some baseline
+        baseline_depth = 10000000  # Arbitrary baseline
+        return min(1.0, market_depth / baseline_depth)
+    
+    def export_metrics_to_dataframe(self, step_results: List[Dict[str, Any]]) -> pd.DataFrame:
+        """Export metrics to pandas DataFrame for analysis"""
+        rows = []
+        
+        for step_result in step_results:
+            if 'step_metrics' not in step_result:
+                continue
+                
+            step_metrics = step_result['step_metrics']
+            base_row = {
+                'step': step_metrics['step'],
+                'timestamp': step_metrics['timestamp'],
+                'block_number': step_metrics['block_number'],
+                'price': step_metrics['price'],
+                'price_change': step_metrics['price_change'],
+                'volatility': step_metrics['volatility'],
+                'reserve_a': step_metrics['reserve_a'],
+                'reserve_b': step_metrics['reserve_b'],
+                'total_lp_supply': step_metrics['total_lp_supply'],
+                'k_invariant': step_metrics['k_invariant'],
+                'total_volume': step_metrics['total_volume'],
+                'total_gas_used': step_metrics['total_gas_used'],
+                'active_agents': step_metrics['active_agents'],
+                'gas_price': step_metrics['gas_price']
+            }
+            
+            rows.append(base_row)
+        
+        return pd.DataFrame(rows)

@@ -1,0 +1,89 @@
+{
+  "AMM_Events": {
+    "Swap": {
+      "description": "Emitted when a token swap occurs",
+      "parameters": {
+        "sender": "address - Account that initiated the swap",
+        "tokenIn": "address - Input token contract address", 
+        "tokenOut": "address - Output token contract address",
+        "amountIn": "uint256 - Amount of input tokens",
+        "amountOut": "uint256 - Amount of output tokens received",
+        "to": "address - Recipient of output tokens"
+      },
+      "csv_mapping": {
+        "event_type": "swap",
+        "block_number": "block_number",
+        "transaction_hash": "transaction_hash",
+        "sender_address": "sender",
+        "token_in_address": "tokenIn",
+        "token_out_address": "tokenOut", 
+        "amount_in_wei": "amountIn",
+        "amount_out_wei": "amountOut",
+        "recipient_address": "to",
+        "timestamp": "block_timestamp"
+      }
+    },
+    "LiquidityAdded": {
+      "description": "Emitted when liquidity is added to the pool",
+      "parameters": {
+        "provider": "address - Liquidity provider address",
+        "amountA": "uint256 - Amount of token A added",
+        "amountB": "uint256 - Amount of token B added", 
+        "liquidity": "uint256 - LP tokens minted"
+      },
+      "csv_mapping": {
+        "event_type": "add_liquidity",
+        "provider_address": "provider",
+        "amount_a_wei": "amountA",
+        "amount_b_wei": "amountB",
+        "lp_tokens_minted": "liquidity"
+      }
+    },
+    "LiquidityRemoved": {
+      "description": "Emitted when liquidity is removed from the pool",
+      "parameters": {
+        "provider": "address - Liquidity provider address",
+        "amountA": "uint256 - Amount of token A received",
+        "amountB": "uint256 - Amount of token B received",
+        "liquidity": "uint256 - LP tokens burned"
+      },
+      "csv_mapping": {
+        "event_type": "remove_liquidity",
+        "provider_address": "provider", 
+        "amount_a_wei": "amountA",
+        "amount_b_wei": "amountB",
+        "lp_tokens_burned": "liquidity"
+      }
+    },
+    "ReservesUpdated": {
+      "description": "Emitted when pool reserves change",
+      "parameters": {
+        "reserveA": "uint256 - New reserve of token A",
+        "reserveB": "uint256 - New reserve of token B"
+      },
+      "csv_mapping": {
+        "event_type": "reserves_updated",
+        "reserve_a_wei": "reserveA",
+        "reserve_b_wei": "reserveB",
+        "k_invariant": "calculated - reserveA * reserveB"
+      }
+    }
+  },
+  "ERC20_Events": {
+    "Transfer": {
+      "description": "ERC20 token transfer",
+      "parameters": {
+        "from": "address - Sender address",
+        "to": "address - Recipient address", 
+        "value": "uint256 - Amount transferred"
+      },
+      "csv_mapping": {
+        "event_type": "erc20_transfer",
+        "from_address": "from",
+        "to_address": "to",
+        "amount_wei": "value",
+        "token_address": "contract_address"
+      }
+    }
+  }
+}

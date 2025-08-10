@@ -1,0 +1,70 @@
+{
+  "step_metrics": {
+    "description": "Per-step simulation metrics",
+    "fields": {
+      "step": "int - Step number",
+      "timestamp": "int - Unix timestamp",
+      "block_number": "int - Ethereum block number",
+      "price": "float - Token A price in terms of token B", 
+      "price_change": "float - Price change from previous step (%)",
+      "volatility": "float - Price volatility (rolling standard deviation)",
+      "reserve_a_wei": "int - Pool reserve of token A in wei",
+      "reserve_b_wei": "int - Pool reserve of token B in wei", 
+      "total_lp_supply": "int - Total LP token supply",
+      "k_invariant": "int - Constant product (reserve_a * reserve_b)",
+      "total_volume_wei": "int - Total trading volume in wei",
+      "total_gas_used": "int - Total gas consumed this step",
+      "active_agents": "int - Number of agents that acted",
+      "gas_price_wei": "int - Gas price in wei"
+    }
+  },
+  "agent_performance": {
+    "description": "Individual agent performance metrics",
+    "fields": {
+      "step": "int - Step number", 
+      "timestamp": "int - Unix timestamp",
+      "agent_id": "string - Unique agent identifier",
+      "agent_type": "string - Type of agent (market_maker, trader, etc)",
+      "pnl": "float - Profit/loss in USD equivalent",
+      "total_gas_used": "int - Cumulative gas used by agent",
+      "transaction_count": "int - Total transactions executed", 
+      "trade_count": "int - Total trades executed",
+      "current_balance_eth": "float - Current ETH balance",
+      "current_balance_token_a": "float - Current token A balance",
+      "current_balance_token_b": "float - Current token B balance",
+      "current_balance_lp": "float - Current LP token balance"
+    }
+  },
+  "trade_history": {
+    "description": "Individual trade records",
+    "fields": {
+      "timestamp": "int - Unix timestamp",
+      "block_number": "int - Block number", 
+      "agent_id": "string - Agent that executed trade",
+      "trade_type": "string - Type of trade (swap, add_liquidity, etc)",
+      "token_in": "string - Input token address",
+      "token_out": "string - Output token address",
+      "amount_in_wei": "int - Input amount in wei",
+      "amount_out_wei": "int - Output amount in wei",
+      "slippage": "float - Actual slippage experienced (%)",
+      "gas_used": "int - Gas consumed by transaction",
+      "gas_price_wei": "int - Gas price paid",
+      "transaction_hash": "string - Transaction hash"
+    }
+  },
+  "liquidity_events": {
+    "description": "Liquidity provision/removal events", 
+    "fields": {
+      "timestamp": "int - Unix timestamp",
+      "block_number": "int - Block number",
+      "agent_id": "string - Liquidity provider agent ID",
+      "event_type": "string - add_liquidity or remove_liquidity",
+      "amount_a_wei": "int - Token A amount in wei",
+      "amount_b_wei": "int - Token B amount in wei", 
+      "lp_tokens": "int - LP tokens minted/burned",
+      "pool_share": "float - Percentage of pool owned (%)",
+      "impermanent_loss": "float - Current impermanent loss (%)",
+      "transaction_hash": "string - Transaction hash"
+    }
+  }
+}

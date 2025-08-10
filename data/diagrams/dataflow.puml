@@ -1,0 +1,132 @@
+@startuml DataFlow
+!define RECTANGLE class
+
+title Blockchain Development Suite - Data Flow Architecture
+
+skinparam backgroundColor #FAFAFA
+skinparam class {
+  BackgroundColor #E1F5FE
+  BorderColor #0277BD
+  ArrowColor #0277BD
+}
+
+RECTANGLE SimulationRunner {
+  + orchestrate_agents()
+  + collect_metrics()
+  + advance_blockchain()
+}
+
+RECTANGLE AgentBase {
+  + step(market_data)
+  + send_transaction()
+  + calculate_pnl()
+}
+
+RECTANGLE MarketMaker {
+  + add_liquidity()
+  + remove_liquidity() 
+  + calculate_impermanent_loss()
+}
+
+RECTANGLE Trader {
+  + execute_swap()
+  + calculate_slippage()
+}
+
+RECTANGLE Web3_RPC {
+  + eth_sendTransaction()
+  + eth_call()
+  + eth_getLogs()
+}
+
+RECTANGLE Ganache {
+  + mine_block()
+  + execute_transaction()
+  + emit_events()
+}
+
+RECTANGLE AMM_Contract {
+  + swapExactTokensForTokens()
+  + addLiquidity()
+  + removeLiquidity()
+}
+
+RECTANGLE ERC20_Contracts {
+  + transfer()
+  + approve()
+  + mint()
+}
+
+RECTANGLE MetricsCalculator {
+  + calculate_slippage()
+  + calculate_impermanent_loss()
+  + calculate_vwap()
+}
+
+RECTANGLE EventListener {
+  + listen_for_events()
+  + parse_transaction_receipt()
+  + extract_event_data()
+}
+
+database CSV_Files {
+  step_metrics.csv
+  agent_performance.csv  
+  trade_history.csv
+  liquidity_events.csv
+}
+
+database JSON_Files {
+  simulation_results.json
+  deployed_contracts.json
+  agent_configurations.json
+}
+
+' Data Flow Connections
+SimulationRunner --> AgentBase : "market_data"
+AgentBase --> MarketMaker : "inheritance"
+AgentBase --> Trader : "inheritance"
+
+MarketMaker --> Web3_RPC : "JSON-RPC calls"
+Trader --> Web3_RPC : "JSON-RPC calls"
+
+Web3_RPC --> Ganache : "HTTP requests"
+Ganache --> AMM_Contract : "execute transactions"
+Ganache --> ERC20_Contracts : "execute transactions"
+
+AMM_Contract --> Ganache : "emit events\n(Swap, LiquidityAdded)"
+ERC20_Contracts --> Ganache : "emit events\n(Transfer, Approval)"
+
+Ganache --> EventListener : "transaction receipts\n& event logs"
+EventListener --> MetricsCalculator : "parsed event data"
+
+MetricsCalculator --> SimulationRunner : "calculated metrics"
+SimulationRunner --> CSV_Files : "export metrics"
+SimulationRunner --> JSON_Files : "export results"
+
+note right of Web3_RPC
+  Standard Ethereum
+  JSON-RPC interface
+  - Personal accounts
+  - Contract deployment
+  - Transaction simulation
+end note
+
+note right of EventListener
+  Real-time event processing:
+  - Filter relevant events
+  - Extract parameters
+  - Calculate derived metrics
+  - Handle transaction failures
+end note
+
+note bottom of CSV_Files
+  Time-series data for analysis:
+  - Price movements
+  - Volume patterns  
+  - Gas usage trends
+  - Agent performance
+  - Liquidity dynamics
+end note
+
+@enduml
