@@ -1,20 +1,56 @@
-# Python virtual environment
+# Virtual environments
 .venv/
+env/
+venv/
+ENV/
 
-# Byte-compiled / optimized / DLL files
+# Python cache and bytecode
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
+*.pyc
 
 # Distribution / packaging
 build/
 dist/
 *.egg-info/
+.eggs/
 
-# Environment variables
+# Environment variables / secrets
 .env
-.DS_Store
+.env.*
+*.pem
+*.key
+*.crt
+*.cert
 
-# IDE specific
+# Blockchain dev
+keystore/
+wallets/
+*.abi
+*.bin
+*.db
+
+# Logs
+*.log
+logs/
+debug.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# IDEs and editors
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node.js (if using web3 front-end)
+node_modules/
+npm-debug.log
+yarn-error.log
